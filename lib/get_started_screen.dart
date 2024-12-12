@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'login_page.dart';
+import 'signup_screen.dart';
 
 class GetStartedScreen extends StatelessWidget {
   @override
@@ -26,7 +28,11 @@ class GetStartedScreen extends StatelessWidget {
             SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                // Navigate to Login screen
+                // Navigate to Login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
               },
               child: Text("Login"),
               style: ElevatedButton.styleFrom(
@@ -37,7 +43,11 @@ class GetStartedScreen extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to Sign Up screen
+                // Navigate to Sign Up page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignupPage()),
+                );
               },
               child: Text("Sign Up"),
               style: ElevatedButton.styleFrom(
