@@ -8,6 +8,7 @@ class SignupPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,14 @@ class SignupPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 16),
             TextField(
               controller: emailController,
               decoration: InputDecoration(
@@ -51,10 +60,12 @@ class SignupPage extends StatelessWidget {
               onPressed: () async {
                 if (passwordController.text == confirmPasswordController.text) {
                   try {
-                    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    UserCredential userCredential = await FirebaseAuth.instance
+                        .createUserWithEmailAndPassword(
                       email: emailController.text,
                       password: passwordController.text,
                     );
+                    userCredential.user?.updateDisplayName(nameController.text);
                     // Add user to Firestore
                     await addUserToFirestore(userCredential.user);
                     // Add user to local database
@@ -78,7 +89,8 @@ class SignupPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Go back to the previous screen (likely the login page)
+                Navigator.pop(
+                    context); // Go back to the previous screen (likely the login page)
               },
               child: Text('Already have an account? Log in'),
             ),
@@ -88,12 +100,13 @@ class SignupPage extends StatelessWidget {
     );
   }
 
+
   Future<void> addUserToFirestore(User? user) async {
     if (user != null) {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'name': nameController.text, // Add the name
         'email': user.email,
         'uid': user.uid,
-        // Add other fields as necessary
       });
     }
   }
@@ -101,12 +114,11 @@ class SignupPage extends StatelessWidget {
   Future<void> addUserToLocalDatabase(User? user) async {
     if (user != null) {
       await UserModel.insert(UserModel(
-        name: user.email!.split('@').first, // Example of deriving a name
+        name: nameController.text, // Use the name from the text field
         email: user.email!,
-        firestoreId: user.uid, // Store Firebase UID for reference
-
+        firestoreId: user.uid,
       ));
+      print("insert succcccccc");
     }
-    print("insert succcccccc");
   }
 }

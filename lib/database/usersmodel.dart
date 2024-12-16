@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hedieaty/database/sqldb.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -71,3 +72,10 @@ class UserModel {
     return await db.delete('users', where: 'id = ?', whereArgs: [id]);
   }
 }
+String getCurrentUserId() {
+  // This is a placeholder function. You need to replace it with actual code to retrieve the user ID.
+  // For example, if using Firebase Authentication:
+  User? user = FirebaseAuth.instance.currentUser;
+  return (user!.uid);  // Make sure `uid` can be parsed as int, or use another method if `id` is an integer in your database.
+}
+
