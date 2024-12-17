@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'EventPage.dart';
+import 'EventcreationPage.dart';
 import 'profile_page.dart';
 import 'event_list_page.dart';
 import 'database/sqldb.dart';
@@ -13,22 +13,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> friendswatch = [];  // List to store friends
   int _selectedIndex = 0;
   TextEditingController _textFieldController = TextEditingController();
 
   static List<Widget> _widgetOptions = <Widget>[
-    EventPage(),
+    EventCreationPage(),
     ProfilePage(),
   ];
 
   @override
   void initState() {
     super.initState();
-    fetchFriendsFromFirestore().then((data) {
-      setState(() {
-        // Your state management logic here, if needed
-      });
-    });
+    fetchFriendsFromFirestore();  // Fetch friends when the page initializes
   }
 
   void _onItemTapped(int index) {
@@ -129,7 +126,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EventPage()),
+                  MaterialPageRoute(builder: (context) => EventCreationPage()),
                 );
               },
               child: Text('Create Your Own Event/List'),
@@ -140,32 +137,24 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: fetchFriendsFromFirestore(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                }
-                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  final friends = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: friends.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: CircleAvatar(),
-                        title: Text(friends[index]['name'] ?? 'No Name'),
-                        onTap: () {
-                          // Handle tap (optional)
-                        },
-                      );
-                    },
-                  );
-                } else {
-                  return Text("No friends to show.");
-                }
+            child: friendswatch.isEmpty
+                ? Center(child: Text("No friends to show."))
+                : ListView.builder(
+              itemCount: friendswatch.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: CircleAvatar(),
+                  title: Text(friendswatch[index]['name'] ?? 'No Name'),
+                  onTap: () {
+                    String friendId = friendswatch[index]['friend_id']; // Get the friend's ID
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EventListPage(friendId: friendId), // Pass friendId
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -206,10 +195,10 @@ class _HomePageState extends State<HomePage> {
     });
 
     print("Friend added to both local database and Firestore.");
-    fetchFriendsFromFirestore();
+    fetchFriendsFromFirestore();  // Refresh the friends list after adding a friend
   }
 
-  Future<List<Map<String, dynamic>>> fetchFriendsFromFirestore() async {
+  Future<void> fetchFriendsFromFirestore() async {
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
     var snapshot = await FirebaseFirestore.instance.collection('friends')
         .where('user_id', isEqualTo: currentUserId)
@@ -220,6 +209,8 @@ class _HomePageState extends State<HomePage> {
       'friend_id': doc.data()['friend_id']  // Use friend_id for other operations if needed
     }).toList();
 
-    return friends;
+    setState(() {
+      friendswatch = friends;  // Update the state to reflect the fetched data
+    });
   }
 }
