@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'database/sqldb.dart';
 import 'database/eventsmodel.dart';
+import 'gift_list_page.dart';
 
 class EventCreationPage extends StatefulWidget {
   @override
@@ -290,7 +291,15 @@ bool flag = eventId == null;
                         ),
                       ],
                     ),
-                    onTap: () => _showEventDetailsDialog(event),
+                      onTap: () {
+                        // Navigate to GiftListPage and pass the event data if necessary
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GiftListPage(eventId: event.id),  // Pass the eventId or other necessary data
+                          ),
+                        );
+                      }
                   );
                 },
               ),
