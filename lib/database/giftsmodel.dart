@@ -6,8 +6,18 @@ class GiftModel {
   final double price;
   final String status;
   final int eventId;
+  final String? firestoreIdgift; // New field for Firestore ID
 
-  GiftModel({this.id, required this.name, required this.description, required this.category, required this.price, required this.status, required this.eventId});
+  GiftModel({
+    this.id,
+    required this.name,
+    required this.description,
+    required this.category,
+    required this.price,
+    required this.status,
+    required this.eventId,
+    this.firestoreIdgift, // Initialize the new field
+  });
 
   factory GiftModel.fromMap(Map<String, dynamic> map) {
     return GiftModel(
@@ -18,6 +28,7 @@ class GiftModel {
       price: map['price'],
       status: map['status'],
       eventId: map['event_id'],
+      firestoreIdgift: map['firestore_Idgift'], // Extract from map
     );
   }
 
@@ -29,12 +40,13 @@ class GiftModel {
       'category': category,
       'price': price,
       'status': status,
-      'event_id': eventId
+      'event_id': eventId,
+      'firestore_Idgift': firestoreIdgift, // Add to map for SQL operations
     };
   }
 
   @override
   String toString() {
-    return 'Gift{id: $id, name: $name, description: $description, category: $category, price: $price, status: $status, event_id: $eventId}';
+    return 'Gift{id: $id, name: $name, description: $description, category: $category, price: $price, status: $status, event_id: $eventId, firestore_Idgift: $firestoreIdgift}';
   }
 }

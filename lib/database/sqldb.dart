@@ -48,6 +48,7 @@ class DatabaseHelper {
         price REAL NOT NULL,
         status TEXT NOT NULL,
         event_id INTEGER,
+        firestore_Idgift TEXT,
         FOREIGN KEY (event_id) REFERENCES events(id) )
     ''');
     await db.execute('''
@@ -119,4 +120,8 @@ class DatabaseHelper {
       whereArgs: [eventId],
     );
   }
+
 }
+
+
+

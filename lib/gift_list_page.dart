@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'database/sqldb.dart';
 
 class GiftListPage extends StatefulWidget {
   final String eventId;
@@ -27,17 +28,17 @@ class _GiftListPageState extends State<GiftListPage> {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('gifts')
-          .where('eventId', isEqualTo: widget.eventId)
+          .where('event_id', isEqualTo: widget.eventId)
           .get();
 
       setState(() {
-        giftList = snapshot.docs.map((doc) => {
-          'id': doc.id,
-          ...doc.data() as Map<String, dynamic>
-        }).toList();
+        giftList = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+            .toList();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error fetching gifts: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error fetching gifts: $e')));
     } finally {
       setState(() {
         _isLoading = false;
@@ -53,15 +54,24 @@ class _GiftListPageState extends State<GiftListPage> {
     });
 
     try {
-      await FirebaseFirestore.instance
-          .collection('gifts')
-          .doc(giftId)
-          .delete();
+      final db = DatabaseHelper.instance;
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gift deleted successfully!')));
+      // Delete from Firestore
+      await FirebaseFirestore.instance.collection('gifts').doc(giftId).delete();
+
+      // Delete from Local Database
+      await db.database.then((db) => db.delete(
+        'gifts',
+        where: 'firestore_Idgift = ?',
+        whereArgs: [giftId],
+      ));
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gift deleted successfully!')));
       _fetchGifts();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting gift: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error deleting gift: $e')));
     } finally {
       setState(() {
         _isLoading = false;
@@ -69,12 +79,107 @@ class _GiftListPageState extends State<GiftListPage> {
     }
   }
 
+
+  Future<void> _submitGift(
+      String name, String description, String price, String category, {String? giftId}) async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    Map<String, dynamic> giftData = {
+      'name': name,
+      'description': description,
+      'price': double.parse(price),
+      'category': category,
+      'status': 'available',
+      'event_id': widget.eventId,
+    };
+
+    try {
+      final db = DatabaseHelper.instance;
+
+      if (giftId == null) {
+        // Insert into Firestore and retrieve Firestore ID
+        DocumentReference docRef = await FirebaseFirestore.instance.collection('gifts').add(giftData);
+        String firestoreId = docRef.id;
+
+        // Insert into Local Database including Firestore ID
+        Map<String, dynamic> localGiftData = Map.from(giftData);
+        localGiftData['firestore_Idgift'] = firestoreId; // Store Firestore ID locally
+
+        await db.database.then((db) => db.insert('gifts', localGiftData));
+      } else {
+        // Update Firestore
+        await FirebaseFirestore.instance.collection('gifts').doc(giftId).update(giftData);
+
+        // Update Local Database including Firestore ID update
+        Map<String, dynamic> localGiftData = Map.from(giftData);
+        localGiftData['firestore_Idgift'] = giftId; // Update Firestore ID just in case
+
+        await db.database.then((db) => db.update(
+          'gifts',
+          localGiftData,
+          where: 'firestore_Idgift = ?',
+          whereArgs: [giftId],
+        ));
+      }
+
+      _fetchGifts(); // Refresh gift list
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gift ${giftId == null ? 'added' : 'updated'} successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding/updating gift: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+
+  void _showGiftDetails(Map<String, dynamic> gift) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Gift Details'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Name: ${gift['name']}'),
+              Text('Description: ${gift['description']}'),
+              Text('Price: \$${gift['price']}'),
+              Text('Category: ${gift['category']}'),
+              Text('Status: ${gift['status']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showGiftDialog({Map<String, dynamic>? gift}) {
     final _formKey = GlobalKey<FormState>();
-    final TextEditingController _nameController = TextEditingController(text: gift?['name']);
-    final TextEditingController _descriptionController = TextEditingController(text: gift?['description']);
-    final TextEditingController _priceController = TextEditingController(text: gift?['price']?.toString());
-    final TextEditingController _categoryController = TextEditingController(text: gift?['category']);
+    final TextEditingController _nameController =
+    TextEditingController(text: gift?['name']);
+    final TextEditingController _descriptionController =
+    TextEditingController(text: gift?['description']);
+    final TextEditingController _priceController =
+    TextEditingController(text: gift?['price']?.toString());
+    final TextEditingController _categoryController =
+    TextEditingController(text: gift?['category']);
 
     showDialog(
       context: context,
@@ -144,8 +249,7 @@ class _GiftListPageState extends State<GiftListPage> {
                       _descriptionController.text,
                       _priceController.text,
                       _categoryController.text,
-                      giftId: gift?['id']
-                  );
+                      giftId: gift?['id']);
                   Navigator.of(context).pop();
                 }
               },
@@ -159,43 +263,6 @@ class _GiftListPageState extends State<GiftListPage> {
         );
       },
     );
-  }
-
-  Future<void> _submitGift(String name, String description, String price, String category, {String? giftId}) async {
-    if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    Map<String, dynamic> giftData = {
-      'name': name,
-      'description': description,
-      'price': double.parse(price),
-      'category': category,
-      'eventId': widget.eventId,
-    };
-
-    try {
-      if (giftId == null) {
-        await FirebaseFirestore.instance
-            .collection('gifts')
-            .add(giftData);
-      } else {
-        await FirebaseFirestore.instance
-            .collection('gifts')
-            .doc(giftId)
-            .update(giftData);
-      }
-      _fetchGifts();  // Refresh gift list after adding/updating
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gift ${giftId == null ? 'added' : 'updated'} successfully!')));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error adding/updating gift: $e')));
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
@@ -217,19 +284,22 @@ class _GiftListPageState extends State<GiftListPage> {
           : ListView.builder(
         itemCount: giftList.length,
         itemBuilder: (context, index) {
+          final gift = giftList[index];
           return ListTile(
-            title: Text(giftList[index]['name']),
-            subtitle: Text('${giftList[index]['description']} - \$${giftList[index]['price']}'),
+            title: Text(gift['name']),
+            subtitle: Text('${gift['description']} - \$${gift['price']}'),
+            onTap: () => _showGiftDetails(gift),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showGiftDialog(gift: giftList[index]),
+                  onPressed: () => _showGiftDialog(gift: gift),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteGift(giftList[index]['id']),
+                  onPressed: () {
+                    _deleteGift(gift['id']);},
                 ),
               ],
             ),

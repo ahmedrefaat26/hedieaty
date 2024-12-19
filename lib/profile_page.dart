@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'EditProfilePage.dart';
-import 'splash_screen.dart'; // Make sure this is the correct path to your SplashScreen
+import 'splash_screen.dart'; // Ensure this is the correct path to your SplashScreen
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -9,11 +10,34 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Map<String, String> userInfo = {
-    'name': 'John Doe',
-    'email': 'john.doe@example.com',
-    'phone': '+1234567890',
-  };
+  User? user = FirebaseAuth.instance.currentUser;
+  Map<String, String> userInfo = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (user != null) {
+      fetchUserInfo();
+    }
+  }
+
+  Future<void> fetchUserInfo() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+      Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+      setState(() {
+        userInfo['name'] = data['name'];
+        userInfo['email'] = data['email'];
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch user data: $e')),
+      );
+    }
+  }
 
   void navigateAndDisplayEditProfile(BuildContext context) async {
     final result = await Navigator.push(
@@ -72,15 +96,11 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           ListTile(
             title: Text('Name'),
-            subtitle: Text(userInfo['name']!),
+            subtitle: Text(userInfo['name'] ?? 'No Name Provided'),
           ),
           ListTile(
             title: Text('Email'),
-            subtitle: Text(userInfo['email']!),
-          ),
-          ListTile(
-            title: Text('Phone'),
-            subtitle: Text(userInfo['phone']!),
+            subtitle: Text(userInfo['email'] ?? 'No Email Provided'),
           ),
         ],
       ),
