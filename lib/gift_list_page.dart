@@ -240,6 +240,7 @@ class _GiftListPageState extends State<GiftListPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   TextFormField(
+                    key: Key('giftNameField'),
                     controller: _nameController,
                     decoration: InputDecoration(labelText: 'Gift Name'),
                     validator: (value) {
@@ -250,6 +251,7 @@ class _GiftListPageState extends State<GiftListPage> {
                     },
                   ),
                   TextFormField(
+                    key: Key('giftDescriptionField'),
                     controller: _descriptionController,
                     decoration: InputDecoration(labelText: 'Description'),
                     validator: (value) {
@@ -260,6 +262,7 @@ class _GiftListPageState extends State<GiftListPage> {
                     },
                   ),
                   TextFormField(
+                    key: Key('giftPriceField'),
                     controller: _priceController,
                     decoration: InputDecoration(labelText: 'Price'),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -274,6 +277,7 @@ class _GiftListPageState extends State<GiftListPage> {
                     },
                   ),
                   TextFormField(
+                    key: Key('giftCategoryField'),
                     controller: _categoryController,
                     decoration: InputDecoration(labelText: 'Category'),
                     validator: (value) {
@@ -315,6 +319,7 @@ class _GiftListPageState extends State<GiftListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: Key('giftCreationPage'),
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         title: Text('Gift List for Event'),

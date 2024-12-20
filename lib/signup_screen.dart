@@ -23,6 +23,7 @@ class SignupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: Key('SignupPage'),
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
         backgroundColor: Colors.lightBlue[50],
@@ -36,6 +37,7 @@ class SignupPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: Key('Name'),
               controller: nameController,
               decoration: InputDecoration(
                 labelText: 'Name',
@@ -44,6 +46,7 @@ class SignupPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              key: Key('Email'),
               controller: emailController,
               decoration: InputDecoration(
                 labelText: 'Email',
@@ -52,6 +55,7 @@ class SignupPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              key: Key('Password'),
               controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
@@ -61,6 +65,7 @@ class SignupPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              key: Key('Confirm Password'),
               controller: confirmPasswordController,
               obscureText: true,
               decoration: InputDecoration(
@@ -70,6 +75,7 @@ class SignupPage extends StatelessWidget {
             ),
             SizedBox(height: 24),
             ElevatedButton(
+                key: Key('signupButton'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent),
               onPressed: () async {

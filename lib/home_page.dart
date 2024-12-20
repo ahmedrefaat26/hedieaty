@@ -99,6 +99,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('Myhomepage'),
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         automaticallyImplyLeading: false,
@@ -125,6 +126,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
+              key: Key('myevent'),
               onPressed: () {
                 Navigator.push(
                   context,

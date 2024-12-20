@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hedieaty/get_started_screen.dart';
 import 'package:lottie/lottie.dart';
-
 import 'home_page.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -14,6 +13,7 @@ class SplashScreen extends StatelessWidget {
       splash: Column(
         children: [
           Center(
+            key: Key('SplashScreen'),
             child: SizedBox(
               width: 300, // Set a specific width
               height: 300, // Set a specific height

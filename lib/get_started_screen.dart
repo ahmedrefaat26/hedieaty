@@ -6,6 +6,7 @@ class GetStartedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: Key('startScreen'),
       backgroundColor: Colors.lightBlue[50],
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -28,6 +29,7 @@ class GetStartedScreen extends StatelessWidget {
             ),
             SizedBox(height: 40),
             ElevatedButton(
+              key: Key('Login'),
               onPressed: () {
                 // Navigate to Login page
                 Navigator.push(
@@ -43,6 +45,7 @@ class GetStartedScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             ElevatedButton(
+              key: Key('SignupButton'),
               onPressed: () {
                 // Navigate to Sign Up page
                 Navigator.push(

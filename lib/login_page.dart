@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:page_transition/page_transition.dart';
 import 'home_page.dart';
 
 Future<void> updateUserFCMToken(String newToken) async {
@@ -23,7 +24,6 @@ class LoginPage extends StatelessWidget {
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
         backgroundColor: Colors.lightBlue[50],
-
         title: Text('Login'),
       ),
       body: Padding(
@@ -50,37 +50,53 @@ class LoginPage extends StatelessWidget {
             ),
             SizedBox(height: 24),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
               onPressed: () async {
                 try {
-                  UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                  UserCredential userCredential =
+                      await FirebaseAuth.instance.signInWithEmailAndPassword(
                     email: emailController.text,
                     password: passwordController.text,
                   );
                   final fcmToken = await FirebaseMessaging.instance.getToken();
-                  if(fcmToken != null) {
+                  if (fcmToken != null) {
                     await updateUserFCMToken(fcmToken);
                   }
-                  FirebaseMessaging.instance.onTokenRefresh.listen(updateUserFCMToken);
+                  FirebaseMessaging.instance.onTokenRefresh
+                      .listen(updateUserFCMToken);
+                  // Navigator.pushReplacement(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => HomePage()),
+                  // );
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
+                    PageTransition(
+                        type: PageTransitionType.fade,
+                        alignment: Alignment.center,
+                        child: HomePage(),
+                        duration: Duration(milliseconds: 500)),
                   );
                 } catch (e) {
-                  print(e);  // For debugging purposes
+                  print(e); // For debugging purposes
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to sign in')),
                   );
                 }
               },
-              child: Text('Login' , style: TextStyle(color: Colors.black),),
+              child: Text(
+                'Login',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
             TextButton(
               onPressed: () {
                 // Handle Forgot Password logic
               },
-              child: Text('Forgot Password?',style: TextStyle(color: Colors.black),),
+              child: Text(
+                'Forgot Password?',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         ),

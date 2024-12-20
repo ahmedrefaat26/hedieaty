@@ -174,6 +174,7 @@ bool flag = eventId == null;
                   SizedBox(height: 16),
 
                   TextFormField(
+                    key: Key('name'),
                     controller: _eventNameController,
                     decoration: InputDecoration(
                       labelText: 'Event Name',
@@ -189,6 +190,7 @@ bool flag = eventId == null;
                   SizedBox(height: 16),
 
                   TextFormField(
+                    key: Key('description'),
                     controller: _descriptionController,
                     decoration: InputDecoration(
                       labelText: 'Event Description',
@@ -204,6 +206,7 @@ bool flag = eventId == null;
                   SizedBox(height: 16),
 
                   TextFormField(
+                    key: Key('date'),
                     controller: _dateController,
                     decoration: InputDecoration(
                       labelText: _eventDate == null ? 'Select Event Date' : 'Event Date: ${_eventDate!.toLocal()}'.split(' ')[0],
@@ -220,6 +223,7 @@ bool flag = eventId == null;
                   SizedBox(height: 16),
 
                   TextFormField(
+                    key: Key('location'),
                     controller: _locationController,
                     decoration: InputDecoration(
                       labelText: 'Event Location',
@@ -235,6 +239,7 @@ bool flag = eventId == null;
                   SizedBox(height: 16),
 
                   ElevatedButton(
+                    key: Key('createdevent'),
                     onPressed: () => _saveEvent(eventId: event?.id),
                     child: Text(event != null ? 'Update Event' : 'Create Event'),
                   ),
@@ -250,12 +255,14 @@ bool flag = eventId == null;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: Key('eventpage'),
       appBar: AppBar(
 
         backgroundColor: Colors.blueAccent,
         title: Text('My Events'),
         actions: [
           IconButton(
+            key: Key('createevent'),
             icon: Icon(Icons.add),
             onPressed: () => _showEventDetailsDialog(),
           ),
