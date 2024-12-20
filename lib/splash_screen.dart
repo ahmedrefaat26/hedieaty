@@ -1,7 +1,10 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hedieaty/get_started_screen.dart';
 import 'package:lottie/lottie.dart';
+
+import 'home_page.dart';
 
 class SplashScreen extends StatelessWidget {
   @override
@@ -20,7 +23,9 @@ class SplashScreen extends StatelessWidget {
         ],
       ),
       splashIconSize: 400,
-      nextScreen: GetStartedScreen(),
+      nextScreen: FirebaseAuth.instance.currentUser == null
+          ? GetStartedScreen()
+          : HomePage(),
     );
   }
 }

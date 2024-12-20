@@ -33,27 +33,55 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> saveProfile() async {
     User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No authenticated user found!'))
+      );
+      return;
+    }
+
     try {
-      await FirebaseFirestore.instance.collection('users').doc(user?.uid).update({
+      // Update the user's own record in the 'users' collection
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'name': nameController.text,
         'email': emailController.text,
       });
 
+      // Update the user's name in all friend references where they are listed
+      var batch = FirebaseFirestore.instance.batch();
+
+      var friendsQuery = await FirebaseFirestore.instance
+          .collection('friends')
+          .where('friend_id', isEqualTo: user.uid)  // Assuming 'friend_id' is the field that holds the user ID
+          .get();
+
+      for (var doc in friendsQuery.docs) {
+        batch.update(doc.reference, {'name': nameController.text});
+      }
+
+      await batch.commit();
+
       // Update local database
       await DatabaseHelper.instance.updateUser({
-        'firestore_id': user!.uid,
+        'firestore_id': user.uid,
         'name': nameController.text,
         'email': emailController.text,
       });
 
       // Signal that the profile was updated successfully
       Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile updated successfully!'))
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e'))
+      );
       // Return false if the update fails
       Navigator.pop(context, false);
     }
   }
+
 
 
   @override

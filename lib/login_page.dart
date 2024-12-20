@@ -1,6 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
+
+Future<void> updateUserFCMToken(String newToken) async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'fcmToken': newToken,
+    });
+  }
+}
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -47,6 +58,11 @@ class LoginPage extends StatelessWidget {
                     email: emailController.text,
                     password: passwordController.text,
                   );
+                  final fcmToken = await FirebaseMessaging.instance.getToken();
+                  if(fcmToken != null) {
+                    await updateUserFCMToken(fcmToken);
+                  }
+                  FirebaseMessaging.instance.onTokenRefresh.listen(updateUserFCMToken);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => HomePage()),

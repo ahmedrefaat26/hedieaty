@@ -1,8 +1,18 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'database/usersmodel.dart';
 import 'home_page.dart';
+
+Future<void> updateUserFCMToken(String newToken) async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'fcmToken': newToken,
+    });
+  }
+}
 
 class SignupPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -73,6 +83,12 @@ class SignupPage extends StatelessWidget {
                     userCredential.user?.updateDisplayName(nameController.text);
                     // Add user to Firestore
                     await addUserToFirestore(userCredential.user);
+                    final fcmToken = await FirebaseMessaging.instance.getToken();
+                    if(fcmToken != null) {
+                      await updateUserFCMToken(fcmToken);
+                    }
+                    FirebaseMessaging.instance.onTokenRefresh.listen(updateUserFCMToken);
+
                     // Add user to local database
                     await addUserToLocalDatabase(userCredential.user);
                     Navigator.pushReplacement(

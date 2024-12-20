@@ -59,4 +59,5 @@ class DefaultFirebaseOptions {
     projectId: 'hediaty-d8468',
     storageBucket: 'hediaty-d8468.firebasestorage.app',
   );
+
 }
