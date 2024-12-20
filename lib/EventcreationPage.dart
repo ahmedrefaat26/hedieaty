@@ -251,7 +251,9 @@ bool flag = eventId == null;
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Event/List'),
+
+        backgroundColor: Colors.blueAccent,
+        title: Text('My Events'),
         actions: [
           IconButton(
             icon: Icon(Icons.add),
@@ -275,35 +277,48 @@ bool flag = eventId == null;
                 itemCount: _events.length,
                 itemBuilder: (context, index) {
                   var event = _events[index];
-                  return ListTile(
-                    title: Text(event['name']),
-                    subtitle: Text('Date: ${event['date'].toDate().toString().split(' ')[0]}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => _showEventDetailsDialog(event),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () => _deleteEvent(event.id),
-                        ),
-                      ],
-                    ),
+                  DateTime date = (event['date'] as Timestamp).toDate(); // Assuming date is stored as Timestamp in Firestore
+                  return Card(
+                    color: Colors.lightBlue[50],
+                    elevation: 4.0,
+                    margin: EdgeInsets.all(8),
+                    child: ListTile(
+                      title: Text(event['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text("Description: ${event['description']}"),
+                          Text("Date: ${date.toString().split(' ')[0]}"), // Formats the date to YYYY-MM-DD
+                          Text("Location: ${event['location']}"),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit,color: Colors.blue),
+                            onPressed: () => _showEventDetailsDialog(event),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete,color: Colors.red,),
+                            onPressed: () => _deleteEvent(event.id),
+                          ),
+                        ],
+                      ),
                       onTap: () {
-                        // Navigate to GiftListPage and pass the event data if necessary
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => GiftListPage(eventId: event.id),  // Pass the eventId or other necessary data
                           ),
                         );
-                      }
+                      },
+                    ),
                   );
                 },
               ),
             ),
+
           ],
         ),
       ),

@@ -1,5 +1,8 @@
-// EditProfilePage.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'database/sqldb.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> currentUserInfo;
@@ -13,38 +16,51 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController nameController;
   late TextEditingController emailController;
-  late TextEditingController phoneController;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.currentUserInfo['name']);
     emailController = TextEditingController(text: widget.currentUserInfo['email']);
-    phoneController = TextEditingController(text: widget.currentUserInfo['phone']);
   }
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
-    phoneController.dispose();
     super.dispose();
   }
 
-  void saveProfile() {
-    Map<String, String> updatedInfo = {
-      'name': nameController.text,
-      'email': emailController.text,
-      'phone': phoneController.text,
-    };
+  Future<void> saveProfile() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user?.uid).update({
+        'name': nameController.text,
+        'email': emailController.text,
+      });
 
-    Navigator.pop(context, updatedInfo);  // Return the updated info to the ProfilePage
+      // Update local database
+      await DatabaseHelper.instance.updateUser({
+        'firestore_id': user!.uid,
+        'name': nameController.text,
+        'email': emailController.text,
+      });
+
+      // Signal that the profile was updated successfully
+      Navigator.pop(context, true);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
+      // Return false if the update fails
+      Navigator.pop(context, false);
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         title: Text('Edit Profile'),
         actions: [
           IconButton(
@@ -71,15 +87,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.emailAddress,
-          ),
-          SizedBox(height: 10),
-          TextField(
-            controller: phoneController,
-            decoration: InputDecoration(
-              labelText: 'Phone',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.phone,
           ),
         ],
       ),

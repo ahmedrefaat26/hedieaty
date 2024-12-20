@@ -9,7 +9,10 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
+        backgroundColor: Colors.lightBlue[50],
+
         title: Text('Login'),
       ),
       body: Padding(
@@ -36,6 +39,8 @@ class LoginPage extends StatelessWidget {
             ),
             SizedBox(height: 24),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent),
               onPressed: () async {
                 try {
                   UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -53,13 +58,13 @@ class LoginPage extends StatelessWidget {
                   );
                 }
               },
-              child: Text('Login'),
+              child: Text('Login' , style: TextStyle(color: Colors.black),),
             ),
             TextButton(
               onPressed: () {
                 // Handle Forgot Password logic
               },
-              child: Text('Forgot Password?'),
+              child: Text('Forgot Password?',style: TextStyle(color: Colors.black),),
             ),
           ],
         ),

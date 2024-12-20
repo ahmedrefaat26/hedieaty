@@ -121,7 +121,17 @@ class DatabaseHelper {
     );
   }
 
-}
+  Future<void> updateUser(Map<String, dynamic> userInfo) async {
+  Database db = await this.database;
+  await db.update(
+  'users',
+  {'name': userInfo['name'], 'email': userInfo['email']},
+  where: 'firestore_id = ?',
+  whereArgs: [userInfo['firestore_id']],
+  );
+  }
+  }
+
 
 
 

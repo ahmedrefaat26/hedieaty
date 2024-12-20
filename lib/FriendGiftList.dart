@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'database/sqldb.dart'; // Import your local database helper if used
+import 'database/sqldb.dart'; // Ensure your local database helper is correctly imported
 
 class FriendGiftList extends StatefulWidget {
   final String eventId;
@@ -20,6 +21,7 @@ class _FriendGiftListState extends State<FriendGiftList> {
     super.initState();
     fetchGifts();
   }
+
 
   void fetchGifts() async {
     try {
@@ -47,17 +49,23 @@ class _FriendGiftListState extends State<FriendGiftList> {
   }
 
   void pledgeGift(String giftId) async {
-    setState(() {
-      isLoading = true; // Show loading indicator during the operation
-    });
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No authenticated user found!')),
+      );
+      return;
+    }
 
     try {
-      // Update Firestore
+      // Update Firestore to mark the gift as pledged and store the pledging user's UID
       await FirebaseFirestore.instance.collection('gifts').doc(giftId).update({
-        'status': 'pledged'
+        'status': 'pledged',
+        'pledgedBy': currentUser.uid // Store the user ID of who pledged the gift
       });
 
-      // Update local SQLite database
+      // Optional: Update local SQLite database if you are synchronizing with local storage
       final db = await DatabaseHelper.instance.database;
       await db.update(
           'gifts',
@@ -74,10 +82,6 @@ class _FriendGiftListState extends State<FriendGiftList> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pledge gift: $e')),
       );
-    } finally {
-      setState(() {
-        isLoading = false; // Hide loading indicator after operation
-      });
     }
   }
 
@@ -86,38 +90,95 @@ class _FriendGiftListState extends State<FriendGiftList> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Gifts for Event'),
+        backgroundColor: Colors.blue,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.sort),
+            onPressed: _showSortOptions,
+          ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : gifts.isEmpty
           ? Center(child: Text('No gifts found for this event.'))
-          :ListView.builder(
+          : ListView.builder(
         itemCount: gifts.length,
         itemBuilder: (context, index) {
           final gift = gifts[index];
-          return ListTile(
-            title: Text(gift['name']),
-            subtitle: Text(gift['description'] ?? 'No description provided.'),
-            trailing: Wrap(
-              spacing: 12, // space between two icons
-              children: <Widget>[
-                Text('\$${gift['price'].toString()}'),
-                IconButton(
-                  icon: Icon(Icons.card_giftcard),
-                  color: gift['status'] == 'pledged' ? Colors.red : Colors.green,
-                  onPressed: () {
-                    if (gift['status'] != 'pledged') {
-                      pledgeGift(gift['id']);
-                    }
-                  },
-                ),
-              ],
+          return Card(
+            color: Colors.lightBlue[50],
+            margin: EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(gift['name']),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Description: ${gift['description']}'),
+                  Text('Price: \$${gift['price']}'),
+                  Text('Category: ${gift['category']}'),
+                ],
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.card_giftcard),
+                color: gift['status'] == 'pledged' ? Colors.red : Colors.green,
+                onPressed: gift['status'] != 'pledged' ? () => pledgeGift(gift['id']) : null,
+              ),
+              onTap: () => showGiftDetailsDialog(context, gift),
             ),
-            onTap: () => showGiftDetailsDialog(context, gift),
           );
         },
       ),
     );
+  }
+
+  void _showSortOptions() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Sort Options'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: Text('Name'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sortGifts('name');
+                },
+              ),
+              ListTile(
+                title: Text('Category'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sortGifts('category');
+                },
+              ),
+              ListTile(
+                title: Text('Price'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sortGifts('price');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _sortGifts(String sortBy) {
+    setState(() {
+      if (sortBy == 'name') {
+        gifts.sort((a, b) => a['name'].compareTo(b['name']));
+      } else if (sortBy == 'category') {
+        gifts.sort((a, b) => a['category'].compareTo(b['category']));
+      } else if (sortBy == 'price') {
+        gifts.sort((a, b) => a['price'].compareTo(b['price']));
+      }
+    });
   }
 
   void showGiftDetailsDialog(BuildContext context, Map<String, dynamic> gift) {
@@ -139,7 +200,7 @@ class _FriendGiftListState extends State<FriendGiftList> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context). pop(),
               child: Text('Close'),
             ),
           ],

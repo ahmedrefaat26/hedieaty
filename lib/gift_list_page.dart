@@ -169,6 +169,53 @@ class _GiftListPageState extends State<GiftListPage> {
       },
     );
   }
+  void _sortGifts(String sortBy) {
+    setState(() {
+      if (sortBy == 'name') {
+        giftList.sort((a, b) => a['name'].compareTo(b['name']));
+      } else if (sortBy == 'date') {
+        giftList.sort((a, b) {
+          var dateA = DateTime.parse(a['eventDate']); // Assuming 'eventDate' is formatted properly
+          var dateB = DateTime.parse(b['eventDate']);
+          return dateA.compareTo(dateB);
+        });
+      } else if (sortBy == 'category') {
+        giftList.sort((a, b) => a['category'].compareTo(b['category']));
+      }
+    });
+  }
+
+  void _showSortOptions() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Sort Options'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: Text('Name'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sortGifts('name');
+                },
+              ),
+              ListTile(
+                title: Text('Category'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sortGifts('category');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
 
   void _showGiftDialog({Map<String, dynamic>? gift}) {
     final _formKey = GlobalKey<FormState>();
@@ -269,14 +316,20 @@ class _GiftListPageState extends State<GiftListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         title: Text('Gift List for Event'),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.sort),
+            onPressed: _showSortOptions,
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () => _showGiftDialog(),
           ),
         ],
       ),
+
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : giftList.isEmpty
@@ -285,23 +338,31 @@ class _GiftListPageState extends State<GiftListPage> {
         itemCount: giftList.length,
         itemBuilder: (context, index) {
           final gift = giftList[index];
-          return ListTile(
-            title: Text(gift['name']),
-            subtitle: Text('${gift['description']} - \$${gift['price']}'),
-            onTap: () => _showGiftDetails(gift),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showGiftDialog(gift: gift),
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    _deleteGift(gift['id']);},
-                ),
-              ],
+          return Card(
+            color: Colors.lightBlue[50],
+            elevation: 4.0,
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(gift['name']),
+              subtitle: Text(
+                'Description: ${gift['description']}\n'
+                    'Price: \$${gift['price'].toString()}\n'
+                    'Category: ${gift['category']}',
+              ),
+              trailing: Wrap(
+                spacing: 12, // space between actions
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () => _showGiftDialog(gift: gift),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteGift(gift['id']),
+                  ),
+                ],
+              ),
+              onTap: () => _showGiftDetails(gift),
             ),
           );
         },

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'EditProfilePage.dart';
-import 'splash_screen.dart'; // Ensure this is the correct path to your SplashScreen
+import 'splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'FriendGiftList.dart';
+import 'pledged_gifts_page.dart'; // Make sure you have this page created
+import 'package:intl/intl.dart'; // Import intl to format dates
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -12,12 +15,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   User? user = FirebaseAuth.instance.currentUser;
   Map<String, String> userInfo = {};
+  List<Map<String, dynamic>> events = [];
 
   @override
   void initState() {
     super.initState();
     if (user != null) {
       fetchUserInfo();
+      fetchEvents();
     }
   }
 
@@ -28,13 +33,47 @@ class _ProfilePageState extends State<ProfilePage> {
           .doc(user!.uid)
           .get();
       Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-      setState(() {
-        userInfo['name'] = data['name'];
-        userInfo['email'] = data['email'];
-      });
+      if (mounted) {
+        setState(() {
+          userInfo['name'] = data['name'];
+          userInfo['email'] = data['email'];
+        });
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to fetch user data: $e')),
+      );
+    }
+  }
+
+  Future<void> fetchEvents() async {
+    try {
+      var snapshot = await FirebaseFirestore.instance
+          .collection('events')
+          .where('user_id', isEqualTo: user!.uid)
+          .get();
+
+      List<Future> eventDetails = snapshot.docs.map((event) async {
+        var giftSnapshot = await FirebaseFirestore.instance
+            .collection('gifts')
+            .where('event_id', isEqualTo: event.id)
+            .get();
+
+        return {
+          'id': event.id,
+          'name': event['name'],
+          'date': DateFormat('yyyy-MM-dd').format((event['date'] as Timestamp).toDate()),
+          'giftCount': giftSnapshot.docs.length,
+        };
+      }).toList();
+
+      var results = await Future.wait(eventDetails);
+      setState(() {
+        events = List<Map<String, dynamic>>.from(results);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching events: $e')),
       );
     }
   }
@@ -46,12 +85,12 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (context) => EditProfilePage(currentUserInfo: userInfo)),
     );
 
-    if (result != null) {
-      setState(() {
-        userInfo = Map<String, String>.from(result);
-      });
+    // Check if the result contains data indicating that the profile was updated
+    if (result == true) {
+      fetchUserInfo(); // Re-fetch user info to update the UI
     }
   }
+
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -72,6 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         title: Text('Profile'),
         actions: <Widget>[
           IconButton(
@@ -84,24 +124,58 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: ListView(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 50,
-              backgroundImage: NetworkImage(
-                  'https://via.placeholder.com/150'), // Placeholder for profile image
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+                  ),
+                ),
+                ListTile(
+                  title: Text('Name'),
+                  subtitle: Text(userInfo['name'] ?? 'No Name Provided'),
+                ),
+                ListTile(
+                  title: Text('Email'),
+                  subtitle: Text(userInfo['email'] ?? 'No Email Provided'),
+                ),
+                ...events.map((event) => Card(
+                  color: Colors.lightBlue[50],
+                  child: ListTile(
+                    title: Text(event['name']),
+                    subtitle: Text('Date: ${event['date']} - Gifts: ${event['giftCount']}'),
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => FriendGiftList(eventId: event['id']),
+                      ));
+                    },
+                  ),
+                )).toList(),
+              ],
             ),
           ),
-          ListTile(
-            title: Text('Name'),
-            subtitle: Text(userInfo['name'] ?? 'No Name Provided'),
-          ),
-          ListTile(
-            title: Text('Email'),
-            subtitle: Text(userInfo['email'] ?? 'No Email Provided'),
-          ),
+          Padding(
+            padding: EdgeInsets.only(bottom: 150), // Adjust the bottom padding to move the button up
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyPledgedGiftsPage()),
+                );
+              },
+              child: Text('My Pledged Gifts'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blueAccent,
+              ),
+            ),
+          )
+
         ],
       ),
     );

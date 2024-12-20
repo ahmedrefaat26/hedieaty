@@ -6,6 +6,7 @@ class GetStartedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.lightBlue[50],
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -34,8 +35,8 @@ class GetStartedScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
-              child: Text("Login"),
-              style: ElevatedButton.styleFrom(
+              child: Text("Login" , style: TextStyle(color: Colors.black),),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue,
                 padding: EdgeInsets.symmetric(vertical: 15),
                 textStyle: TextStyle(fontSize: 18),
               ),
@@ -49,8 +50,8 @@ class GetStartedScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => SignupPage()),
                 );
               },
-              child: Text("Sign Up"),
-              style: ElevatedButton.styleFrom(
+              child: Text("Sign Up" , style: TextStyle(color: Colors.black),),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlue,
                 padding: EdgeInsets.symmetric(vertical: 15),
                 textStyle: TextStyle(fontSize: 18),
               ),

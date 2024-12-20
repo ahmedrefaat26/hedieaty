@@ -46,6 +46,7 @@ dependencies:
   path_provider: ^2.1.5
   cloud_firestore: ^5.5.1
   intl: ^0.20.1
+  json_theme_plus: ^6.6.3
 
 dev_dependencies:
   flutter_test:

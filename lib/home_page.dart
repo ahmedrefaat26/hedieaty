@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,19 +14,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> friendswatch = [];  // List to store friends
+  List<Map<String, dynamic>> friendswatch = []; // List to store friends
   int _selectedIndex = 0;
   TextEditingController _textFieldController = TextEditingController();
 
   static List<Widget> _widgetOptions = <Widget>[
-    EventCreationPage(),
+    HomePage(),
     ProfilePage(),
   ];
 
   @override
   void initState() {
     super.initState();
-    fetchFriendsFromFirestore();  // Fetch friends when the page initializes
+    fetchFriendsFromFirestore(); // Fetch friends when the page initializes
   }
 
   void _onItemTapped(int index) {
@@ -39,7 +40,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showAddFriendDialog() {
-    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;  // Get current user's UID
+    final String currentUserId = FirebaseAuth.instance.currentUser!
+        .uid; // Get current user's UID
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -48,15 +50,19 @@ class _HomePageState extends State<HomePage> {
           content: Container(
             width: double.maxFinite,
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('users').snapshots(),
-              builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              stream: FirebaseFirestore.instance.collection('users')
+                  .snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasError) {
                   return Text("Something went wrong");
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
-                var docs = snapshot.data!.docs.where((doc) => doc.id != currentUserId).toList();  // Manually filter out the current user
+                var docs = snapshot.data!.docs.where((doc) =>
+                doc.id != currentUserId)
+                    .toList(); // Manually filter out the current user
                 return ListView.builder(
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
@@ -94,30 +100,26 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
         automaticallyImplyLeading: false,
-        title: Text('Home'),
+
+        title: Text('Home', style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.search, color: Colors.white),
             onPressed: () {
               // Implement search functionality here
             },
+
           ),
+
           IconButton(
-            icon: Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person_add),
+            icon: Icon(Icons.person_add, color: Colors.white),
             onPressed: _showAddFriendDialog,
           ),
         ],
       ),
+
       body: Column(
         children: [
           Padding(
@@ -129,9 +131,10 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (context) => EventCreationPage()),
                 );
               },
-              child: Text('Create Your Own Event/List'),
+              child: Text('My Events', style: TextStyle(color: Colors.white),),
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 15),
+                backgroundColor: Colors.blueAccent, // Button color
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 textStyle: TextStyle(fontSize: 18),
               ),
             ),
@@ -142,18 +145,33 @@ class _HomePageState extends State<HomePage> {
                 : ListView.builder(
               itemCount: friendswatch.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(),
-                  title: Text(friendswatch[index]['name'] ?? 'No Name'),
-                  onTap: () {
-                    String friendId = friendswatch[index]['friend_id']; // Get the friend's ID
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EventListPage(friendId: friendId), // Pass friendId
-                      ),
-                    );
-                  },
+                return Card(
+                  color: Colors.lightBlue[50],
+                  // Light theme with shades of blue
+                  elevation: 5,
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue[100],
+                      child: Text(
+                          friendswatch[index]['name'][0]), // First letter of name
+                    ),
+                    title: Text(friendswatch[index]['name'],
+                        style: TextStyle(color: Colors.blueAccent)),
+                    subtitle: Text(
+                        '${friendswatch[index]['events_count']} upcoming events',
+                        style: TextStyle(color: Colors.black54)),
+                    onTap: () {
+                      String friendId = friendswatch[index]['friend_id'];
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EventListPage(friendId: friendId),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -164,7 +182,7 @@ class _HomePageState extends State<HomePage> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.event),
-            label: 'Events',
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
@@ -172,45 +190,60 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.white,
+        backgroundColor: Colors.blueAccent,
         onTap: _onItemTapped,
       ),
     );
   }
 
-  Future<void> addFriendToLocalAndFirestoreDatabase(Map<String, dynamic> userData) async {
+
+  Future<void> addFriendToLocalAndFirestoreDatabase(
+      Map<String, dynamic> userData) async {
     Database db = await DatabaseHelper.instance.database;
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     // Add to local database
     await db.insert('friends', {
       'user_id': currentUserId,
-      'friend_id': userData['uid'],  // Assuming 'uid' is part of userData from Firestore
+      'friend_id': userData['uid'],
+      // Assuming 'uid' is part of userData from Firestore
     });
 
     // Add to Firestore
     await FirebaseFirestore.instance.collection('friends').add({
       'user_id': currentUserId,
       'friend_id': userData['uid'],
-      'name': userData['name'],  // Storing the friend's name in Firestore for easy access
+      'name': userData['name'],
+      // Storing the friend's name in Firestore for easy access
     });
 
     print("Friend added to both local database and Firestore.");
-    fetchFriendsFromFirestore();  // Refresh the friends list after adding a friend
+    fetchFriendsFromFirestore(); // Refresh the friends list after adding a friend
   }
 
   Future<void> fetchFriendsFromFirestore() async {
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    var snapshot = await FirebaseFirestore.instance.collection('friends')
+    var friendSnapshot = await FirebaseFirestore.instance.collection('friends')
         .where('user_id', isEqualTo: currentUserId)
         .get();
 
-    List<Map<String, dynamic>> friends = snapshot.docs.map((doc) => {
-      'name': doc.data()['name'],  // Display name directly
-      'friend_id': doc.data()['friend_id']  // Use friend_id for other operations if needed
-    }).toList();
+    List<Map<String, dynamic>> friends = [];
+    for (var doc in friendSnapshot.docs) {
+      // Fetching number of events for each friend
+      var eventData = await FirebaseFirestore.instance.collection('events')
+          .where('user_id', isEqualTo: doc.data()['friend_id'])
+          .get();
+
+      friends.add({
+        'name': doc.data()['name'],
+        'friend_id': doc.data()['friend_id'],
+        'events_count': eventData.docs.length // Number of events for the friend
+      });
+    }
 
     setState(() {
-      friendswatch = friends;  // Update the state to reflect the fetched data
+      friendswatch = friends; // Update the state to reflect the fetched data
     });
   }
 }

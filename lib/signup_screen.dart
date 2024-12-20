@@ -13,8 +13,11 @@ class SignupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
-        title: Text('Sign Up'),
+        backgroundColor: Colors.lightBlue[50],
+
+        title: Text('Sign Up',style: TextStyle(color: Colors.black)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -57,6 +60,8 @@ class SignupPage extends StatelessWidget {
             ),
             SizedBox(height: 24),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent),
               onPressed: () async {
                 if (passwordController.text == confirmPasswordController.text) {
                   try {
@@ -85,14 +90,14 @@ class SignupPage extends StatelessWidget {
                   );
                 }
               },
-              child: Text('Sign Up'),
+              child: Text('Sign Up', style: TextStyle(color: Colors.black),),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(
                     context); // Go back to the previous screen (likely the login page)
               },
-              child: Text('Already have an account? Log in'),
+              child: Text('Already have an account? Log in' , style: TextStyle(color: Colors.black),),
             ),
           ],
         ),
